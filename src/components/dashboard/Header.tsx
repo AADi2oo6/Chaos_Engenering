@@ -3,7 +3,7 @@
 import React from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { LogOut, Flame, Shield, HelpCircle, Activity } from 'lucide-react';
+import { LogOut, Activity, Shield, Terminal } from 'lucide-react';
 import { ConsistencyScoreBreakdown } from '@/types/habit';
 
 interface HeaderProps {
@@ -21,13 +21,6 @@ export function Header({
 }: HeaderProps) {
   const router = useRouter();
 
-  const getGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return 'Good morning';
-    if (hour < 18) return 'Good afternoon';
-    return 'Good evening';
-  };
-
   const handleLogout = async () => {
     const supabase = createClient();
     await supabase.auth.signOut();
@@ -35,52 +28,69 @@ export function Header({
     router.refresh();
   };
 
+  const formattedScore = String(consistency.score).padStart(3, '0');
+
   return (
-    <header className="border-b border-slate-800/80 pb-6 mb-8 space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <span className="text-xs uppercase tracking-wider text-slate-500 font-semibold">
-            {getGreeting()}
-          </span>
-          <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight flex items-center gap-2">
-            <span>{displayName || 'Habit Builder'}</span>
-            <span className="text-2xl">👋</span>
-          </h1>
+    <header className="border-b-[3px] border-black pb-5 mb-8 space-y-4">
+      {/* Top Navbar Row */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        {/* Brand Logo & System ID */}
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 bg-black text-white flex items-center justify-center font-mono font-black text-lg border-2 border-black shadow-[2px_2px_0px_0px_#ea580c]">
+            ◈
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="font-mono font-black text-base tracking-tight uppercase">
+                CHAOS // HABIT SYSTEM
+              </span>
+              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-zinc-100 border border-black text-[10px] font-mono font-bold">
+                <span className="w-1.5 h-1.5 bg-[#16a34a] inline-block animate-pulse" />
+                SYSTEM ONLINE
+              </span>
+            </div>
+            <div className="text-[11px] font-mono text-zinc-600 uppercase font-semibold">
+              OPERATOR: <span className="text-black font-black">{displayName || 'HABIT_BUILDER'}</span>
+            </div>
+          </div>
         </div>
 
-        <div className="flex items-center gap-3 flex-wrap">
-          {/* Recovery Token Indicator */}
-          <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs">
-            <Shield className={`h-4 w-4 ${recoveryTokensAvailable > 0 ? 'text-cyan-400' : 'text-slate-600'}`} />
-            <span className="text-slate-400">Weekly Recovery:</span>
+        {/* Right Action Controls */}
+        <div className="flex items-center gap-2.5 flex-wrap font-mono">
+          {/* Recovery Token Resource */}
+          <div className="flex items-center gap-2 px-3 py-1.5 border-2 border-black bg-white shadow-[2px_2px_0px_0px_#09090b] text-xs">
             <span
-              className={`font-semibold ${
-                recoveryTokensAvailable > 0 ? 'text-cyan-300' : 'text-slate-500'
+              className={`w-2 h-2 ${
+                recoveryTokensAvailable > 0 ? 'bg-[#ea580c]' : 'bg-zinc-400'
               }`}
-            >
-              {recoveryTokensAvailable > 0 ? '1 Token Ready' : 'Used this week'}
+            />
+            <span className="text-zinc-600 font-bold uppercase">RECOVERY:</span>
+            <span className="font-black text-black">
+              {recoveryTokensAvailable > 0 ? '01 READY' : '00 USED'}
             </span>
           </div>
 
-          {/* Consistency Score Badge */}
+          {/* Consistency Index Trigger */}
           <button
             onClick={onOpenScoreModal}
-            className="flex items-center gap-2.5 px-3.5 py-1.5 rounded-xl bg-indigo-950/40 border border-indigo-500/30 hover:border-indigo-500/60 text-xs transition-all group"
-            title="Click to view score breakdown"
+            className="flex items-center gap-2 px-3 py-1.5 border-2 border-black bg-white shadow-[2px_2px_0px_0px_#09090b] hover:bg-[#ea580c] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] text-xs transition-all cursor-pointer group"
+            title="Inspect Consistency Index breakdown"
           >
-            <Activity className="h-4 w-4 text-indigo-400 group-hover:scale-110 transition-transform" />
-            <span className="text-slate-300">Consistency:</span>
-            <span className="font-bold text-indigo-300 text-sm">{consistency.score}/100</span>
-            <HelpCircle className="h-3.5 w-3.5 text-indigo-400/70" />
+            <Activity className="h-3.5 w-3.5 text-black" />
+            <span className="font-bold uppercase text-zinc-700 group-hover:text-black">INDEX:</span>
+            <span className="font-black text-[#ea580c] group-hover:text-black text-sm">
+              {formattedScore} / 100
+            </span>
           </button>
 
-          {/* Sign Out Button */}
+          {/* Logout Button */}
           <button
             onClick={handleLogout}
-            className="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-400 hover:text-rose-400 transition-colors"
-            title="Sign Out"
+            className="btn-brutal-secondary py-1.5 px-3 text-xs"
+            title="Disconnect session"
           >
-            <LogOut className="h-4 w-4" />
+            <LogOut className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">DISCONNECT</span>
           </button>
         </div>
       </div>

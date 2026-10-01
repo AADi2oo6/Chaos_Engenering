@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Trash2, AlertTriangle, Loader2 } from 'lucide-react';
+import { AlertTriangle, Loader2 } from 'lucide-react';
 import { Habit } from '@/types/habit';
 
 interface DeleteHabitDialogProps {
@@ -32,39 +32,44 @@ export function DeleteHabitDialog({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-      <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-6 space-y-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-none">
+      <div className="w-full max-w-md bg-white border-[3px] border-black p-6 shadow-[8px_8px_0px_0px_#09090b] space-y-5 font-mono text-xs">
         <div className="flex items-start gap-3">
-          <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400">
+          <div className="p-2 border-2 border-black bg-red-100 text-[#dc2626]">
             <AlertTriangle className="h-5 w-5" />
           </div>
           <div>
-            <h3 className="text-base font-bold text-white tracking-tight">
-              Delete “{habit.name}”?
+            <h3 className="text-base font-black uppercase tracking-tight text-black">
+              DEACTIVATE HABIT?
             </h3>
-            <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-              This will remove the habit from your active dashboard. Historical logs and analytics will safely remain stored.
+            <div className="text-sm font-black text-[#dc2626] uppercase mt-1">
+              // {habit.name.toUpperCase()}
+            </div>
+            <p className="text-zinc-600 mt-2 font-sans font-medium text-xs leading-relaxed">
+              This will remove the habit from your active operations dashboard. Historical logs, streak telemetry, and score data remain safely preserved in the database.
             </p>
           </div>
         </div>
 
-        <div className="flex justify-end gap-3 pt-3 border-t border-slate-800">
+        <div className="flex justify-end gap-3 pt-3 border-t-2 border-black">
           <button
             type="button"
             disabled={loading}
             onClick={onClose}
-            className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium transition-colors"
+            className="btn-brutal-secondary"
           >
-            Cancel
+            CANCEL
           </button>
           <button
             type="button"
             disabled={loading}
             onClick={handleDelete}
-            className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 disabled:opacity-50 text-white text-xs font-semibold flex items-center gap-1.5 shadow-md shadow-rose-600/20 transition-all"
+            className="btn-brutal-danger"
           >
-            {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
-            Delete
+            {loading ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin mr-1 inline" />
+            ) : null}
+            CONFIRM DELETION
           </button>
         </div>
       </div>

@@ -17,7 +17,6 @@ import {
   Trophy,
   Shield,
   Activity,
-  Sparkles,
   Loader2,
   AlertCircle,
   CheckCircle,
@@ -76,7 +75,7 @@ export default function DashboardPage() {
         user.user_metadata?.display_name ||
           user.user_metadata?.name ||
           user.email?.split('@')[0] ||
-          'Habit Builder'
+          'OPERATOR'
       );
 
       const res = await fetch('/api/habits');
@@ -85,7 +84,7 @@ export default function DashboardPage() {
           router.push('/login');
           return;
         }
-        throw new Error('Failed to load habits data');
+        throw new Error('FAILED TO RETRIEVE TELEMETRY DATA');
       }
 
       const data = await res.json();
@@ -93,7 +92,7 @@ export default function DashboardPage() {
       if (data.consistency) setConsistency(data.consistency);
       if (data.recovery) setRecoveryTokensAvailable(data.recovery.available);
     } catch (err: unknown) {
-      showToast(err instanceof Error ? err.message : 'Error fetching dashboard data', 'error');
+      showToast(err instanceof Error ? err.message : 'COMMUNICATION ERROR', 'error');
     } finally {
       setLoading(false);
     }
@@ -113,10 +112,10 @@ export default function DashboardPage() {
 
     if (!res.ok) {
       const errData = await res.json();
-      throw new Error(errData.error || 'Failed to create habit');
+      throw new Error(errData.error || 'FAILED TO CREATE HABIT');
     }
 
-    showToast(`Created habit: ${input.name}!`);
+    showToast(`HABIT PROTOCOL INITIALIZED: ${input.name.toUpperCase()}`);
     await loadData();
   };
 
@@ -129,10 +128,10 @@ export default function DashboardPage() {
 
     if (!res.ok) {
       const errData = await res.json();
-      throw new Error(errData.error || 'Failed to update habit');
+      throw new Error(errData.error || 'FAILED TO COMMIT REVISION');
     }
 
-    showToast('Habit updated successfully!');
+    showToast('HABIT CONFIGURATION COMMITTED');
     await loadData();
   };
 
@@ -143,10 +142,10 @@ export default function DashboardPage() {
 
     if (!res.ok) {
       const errData = await res.json();
-      throw new Error(errData.error || 'Failed to delete habit');
+      throw new Error(errData.error || 'FAILED TO DEACTIVATE');
     }
 
-    showToast('Habit removed from active dashboard.');
+    showToast('HABIT PROTOCOL DEACTIVATED');
     await loadData();
   };
 
@@ -164,15 +163,15 @@ export default function DashboardPage() {
 
     if (!res.ok) {
       const errData = await res.json();
-      showToast(errData.error || 'Failed to log daily value', 'error');
+      showToast(errData.error || 'LOG ENTRY FAILED', 'error');
       return;
     }
 
     const resData = await res.json();
     if (resData.status === 'completed') {
-      showToast('🎉 Daily target completed! Streak extended.');
+      showToast('✓ TARGET COMPLETED // STREAK EXTENDED');
     } else {
-      showToast('Progress recorded.');
+      showToast('PARTIAL VALUE RECORDED');
     }
 
     await loadData();
@@ -189,15 +188,14 @@ export default function DashboardPage() {
 
     if (!res.ok) {
       const errData = await res.json();
-      showToast(errData.error || 'Failed to apply recovery token', 'error');
+      showToast(errData.error || 'RECOVERY TOKEN EXHAUSTED', 'error');
       return;
     }
 
-    showToast('🛟 Recovery applied! Streak successfully protected.');
+    showToast('↺ RECOVERY TOKEN APPLIED // STREAK PRESERVED');
     await loadData();
   };
 
-  // Quick starter helper
   const handleQuickAdd = async (name: string, target_value: number, target_unit: string, category: string) => {
     try {
       await handleCreateHabit({
@@ -208,20 +206,22 @@ export default function DashboardPage() {
         frequency: 'daily',
       });
     } catch (e: unknown) {
-      showToast(e instanceof Error ? e.message : 'Error creating preset', 'error');
+      showToast(e instanceof Error ? e.message : 'FAILED TO INITIALIZE TEMPLATE', 'error');
     }
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-slate-950 text-slate-400 gap-3">
-        <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
-        <p className="text-sm">Loading your habit dashboard...</p>
+      <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-white text-black font-mono gap-3">
+        <Loader2 className="h-8 w-8 animate-spin text-[#ea580c]" />
+        <p className="text-xs uppercase font-bold tracking-wider">
+          INITIALIZING TELEMETRY DASHBOARD...
+        </p>
       </div>
     );
   }
 
-  // Summary statistics across active habits
+  // Summary statistics
   const activeCount = habits.length;
   const maxStreak = habits.reduce((acc, h) => Math.max(acc, h.currentStreak), 0);
   const bestAllTimeStreak = habits.reduce((acc, h) => Math.max(acc, h.bestStreak), 0);
@@ -230,27 +230,33 @@ export default function DashboardPage() {
       ? Math.round(habits.reduce((acc, h) => acc + h.completionRate, 0) / activeCount)
       : 0;
 
+  const todayFormatted = new Intl.DateTimeFormat('en-GB', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  })
+    .format(new Date())
+    .toUpperCase();
+
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 p-4 md:p-8 max-w-6xl mx-auto space-y-8">
-      {/* Toast Notification Banner */}
+    <div className="min-h-screen bg-white text-[#09090b] p-4 md:p-8 max-w-7xl mx-auto space-y-8">
+      {/* Brutalist Toast Notification */}
       {toastMessage && (
         <div
-          className={`fixed top-5 right-5 z-50 flex items-center gap-2 px-4 py-3 rounded-xl shadow-2xl border text-sm animate-in fade-in slide-in-from-top-2 duration-200 ${
-            toastMessage.type === 'error'
-              ? 'bg-rose-950/90 border-rose-500/40 text-rose-200'
-              : 'bg-emerald-950/90 border-emerald-500/40 text-emerald-200'
+          className={`fixed top-5 right-5 z-50 flex items-center gap-3 px-4 py-3 border-[3px] border-black bg-white shadow-[4px_4px_0px_0px_#09090b] text-xs font-mono font-bold animate-in fade-in slide-in-from-top-2 duration-150 ${
+            toastMessage.type === 'error' ? 'text-[#dc2626]' : 'text-black'
           }`}
         >
           {toastMessage.type === 'error' ? (
-            <AlertCircle className="h-4 w-4 shrink-0" />
+            <AlertCircle className="h-4 w-4 shrink-0 text-[#dc2626]" />
           ) : (
-            <CheckCircle className="h-4 w-4 shrink-0" />
+            <span className="w-2.5 h-2.5 bg-[#ea580c] shrink-0" />
           )}
-          <span>{toastMessage.text}</span>
+          <span className="uppercase tracking-wide">{toastMessage.text}</span>
         </div>
       )}
 
-      {/* Header */}
+      {/* Industrial Header */}
       <Header
         displayName={displayName}
         consistency={consistency}
@@ -258,130 +264,163 @@ export default function DashboardPage() {
         onOpenScoreModal={() => setIsScoreOpen(true)}
       />
 
-      {/* Top Stats Overview Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-        <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 space-y-1">
-          <div className="flex items-center gap-2 text-xs text-slate-400">
-            <Flame className="h-4 w-4 text-amber-400" />
-            <span>Top Active Streak</span>
-          </div>
-          <div className="text-2xl font-extrabold text-white">{maxStreak} <span className="text-sm font-normal text-slate-500">days</span></div>
+      {/* Hero Diagnostic Telemetry Grid */}
+      <section className="space-y-3 font-mono">
+        <div className="flex justify-between items-center text-xs font-bold uppercase text-zinc-600 border-b-2 border-black pb-1">
+          <span>SYSTEM TELEMETRY // DAILY OVERVIEW</span>
+          <span>DATE: {todayFormatted}</span>
         </div>
 
-        <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 space-y-1">
-          <div className="flex items-center gap-2 text-xs text-slate-400">
-            <Trophy className="h-4 w-4 text-yellow-400" />
-            <span>Best All-Time</span>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+          {/* 1. Consistency Index */}
+          <div className="border-[3px] border-black bg-white p-4 shadow-[4px_4px_0px_0px_#09090b] space-y-1">
+            <div className="text-[10px] text-zinc-500 font-bold uppercase">
+              CONSISTENCY INDEX
+            </div>
+            <div className="text-2xl sm:text-3xl font-black text-black">
+              <span className="text-[#ea580c]">{String(consistency.score).padStart(3, '0')}</span>{' '}
+              <span className="text-xs text-zinc-400 font-normal">/ 100</span>
+            </div>
+            <div className="h-2 w-full bg-zinc-200 border border-black p-0.5 mt-1">
+              <div
+                className="h-full bg-black"
+                style={{ width: `${consistency.score}%` }}
+              />
+            </div>
           </div>
-          <div className="text-2xl font-extrabold text-white">{bestAllTimeStreak} <span className="text-sm font-normal text-slate-500">days</span></div>
-        </div>
 
-        <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 space-y-1">
-          <div className="flex items-center gap-2 text-xs text-slate-400">
-            <Activity className="h-4 w-4 text-indigo-400" />
-            <span>Avg Completion</span>
+          {/* 2. Current Streak */}
+          <div className="border-[3px] border-black bg-white p-4 shadow-[4px_4px_0px_0px_#09090b] space-y-1">
+            <div className="text-[10px] text-zinc-500 font-bold uppercase">
+              TOP ACTIVE STREAK
+            </div>
+            <div className="text-2xl sm:text-3xl font-black text-black">
+              {String(maxStreak).padStart(2, '0')}{' '}
+              <span className="text-xs text-zinc-500 font-bold uppercase">DAYS</span>
+            </div>
+            <div className="text-[10px] text-zinc-500 font-semibold uppercase">
+              BEST ALL-TIME: {String(bestAllTimeStreak).padStart(2, '0')}D
+            </div>
           </div>
-          <div className="text-2xl font-extrabold text-white">{avgCompletion}%</div>
-        </div>
 
-        <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 space-y-1">
-          <div className="flex items-center gap-2 text-xs text-slate-400">
-            <Shield className="h-4 w-4 text-cyan-400" />
-            <span>Weekly Recovery</span>
+          {/* 3. Average Completion */}
+          <div className="border-[3px] border-black bg-white p-4 shadow-[4px_4px_0px_0px_#09090b] space-y-1">
+            <div className="text-[10px] text-zinc-500 font-bold uppercase">
+              COMPLETION RATE
+            </div>
+            <div className="text-2xl sm:text-3xl font-black text-black">
+              {avgCompletion}%
+            </div>
+            <div className="text-[10px] text-zinc-500 font-semibold uppercase">
+              {activeCount} ACTIVE PROTOCOLS
+            </div>
           </div>
-          <div className="text-2xl font-extrabold text-cyan-300">
-            {recoveryTokensAvailable} <span className="text-sm font-normal text-slate-500">left</span>
+
+          {/* 4. Weekly Recovery Token */}
+          <div className="border-[3px] border-black bg-white p-4 shadow-[4px_4px_0px_0px_#09090b] space-y-1">
+            <div className="text-[10px] text-zinc-500 font-bold uppercase">
+              RECOVERY TOKEN
+            </div>
+            <div className="text-2xl sm:text-3xl font-black text-[#ea580c]">
+              0{recoveryTokensAvailable}{' '}
+              <span className="text-xs text-black font-bold uppercase">READY</span>
+            </div>
+            <div className="text-[10px] text-zinc-500 font-semibold uppercase">
+              1 SKIP ALLOWED / CALENDAR WEEK
+            </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Main Section Header */}
-      <div className="flex justify-between items-center pt-4">
+      {/* Operations Bar */}
+      <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 pt-2 font-mono">
         <div>
-          <h2 className="text-xl font-bold text-white tracking-tight">Today's Habits</h2>
-          <p className="text-xs text-slate-400">Log daily values, meet targets, and preserve streaks</p>
+          <h2 className="text-xl font-black uppercase tracking-tight text-black flex items-center gap-2">
+            <span className="w-2.5 h-2.5 bg-black" />
+            TODAY'S OPERATIONS
+          </h2>
+          <p className="text-xs text-zinc-600 font-medium">
+            ENTER ACTUAL VALUES TO SATISFY DAILY TARGETS AND MAINTAIN RUNNING STREAKS.
+          </p>
         </div>
         <button
           onClick={() => setIsCreateOpen(true)}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-xs shadow-md shadow-indigo-600/20 transition-all hover:gap-2.5"
+          className="btn-brutal-primary py-2.5 px-5 text-xs font-bold"
         >
-          <Plus className="h-4 w-4" /> Add Habit
+          <Plus className="h-4 w-4" />
+          [ DEPLOY NEW HABIT ]
         </button>
       </div>
 
-      {/* Habits Grid or Empty State */}
+      {/* Habit Protocol Grid or Empty State */}
       {habits.length === 0 ? (
-        <div className="p-8 md:p-12 rounded-3xl bg-slate-900/60 border border-slate-800 text-center space-y-6">
+        <div className="border-[3px] border-black bg-white p-8 md:p-12 shadow-[6px_6px_0px_0px_#09090b] text-center space-y-6 font-mono">
           <div className="max-w-md mx-auto space-y-2">
-            <div className="h-12 w-12 rounded-2xl bg-indigo-600/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center mx-auto mb-3">
-              <Sparkles className="h-6 w-6" />
+            <div className="w-12 h-12 bg-black text-white flex items-center justify-center font-black text-xl mx-auto border-2 border-black shadow-[3px_3px_0px_0px_#ea580c]">
+              ◈
             </div>
-            <h3 className="text-xl font-bold text-white">You haven't created any habits yet</h3>
-            <p className="text-xs text-slate-400">
-              Start your journey by setting a daily target. Select one of the quick suggestions below or create your own custom habit.
+            <h3 className="text-lg font-black uppercase text-black">
+              NO ACTIVE HABIT PROTOCOLS CONFIGURED
+            </h3>
+            <p className="text-xs text-zinc-600 font-sans font-medium leading-relaxed">
+              Initialize your first habit by setting a daily numeric target. Select a pre-configured engineering template or configure a custom protocol.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 max-w-3xl mx-auto pt-2">
+          {/* Quick-Start Templates */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 max-w-4xl mx-auto pt-2">
             <button
-              onClick={() => handleQuickAdd('Reading', 10, 'pages', 'Learning')}
-              className="p-4 rounded-2xl bg-slate-950 border border-slate-800 hover:border-indigo-500/50 hover:bg-slate-900 transition-all text-left space-y-1 group"
+              onClick={() => handleQuickAdd('READING', 10, 'PAGES', 'LEARNING')}
+              className="p-4 border-2 border-black bg-white hover:bg-[#ea580c] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all text-left shadow-[3px_3px_0px_0px_#09090b] group"
             >
-              <div className="text-2xl mb-1">📖</div>
-              <div className="font-bold text-sm text-slate-200 group-hover:text-indigo-400 transition-colors">
-                Read 10 pages
-              </div>
-              <div className="text-[11px] text-slate-500">Learning • 10 pages/day</div>
+              <div className="text-xs font-bold text-zinc-500 uppercase group-hover:text-black">01 / TEMPLATE</div>
+              <div className="font-black text-sm text-black mt-1 uppercase">READ 10 PAGES</div>
+              <div className="text-[11px] text-zinc-600 mt-1 font-bold group-hover:text-black">LEARNING • 10 PAGES/DAY</div>
             </button>
 
             <button
-              onClick={() => handleQuickAdd('Walking', 5000, 'steps', 'Fitness')}
-              className="p-4 rounded-2xl bg-slate-950 border border-slate-800 hover:border-indigo-500/50 hover:bg-slate-900 transition-all text-left space-y-1 group"
+              onClick={() => handleQuickAdd('WALKING', 5000, 'STEPS', 'FITNESS')}
+              className="p-4 border-2 border-black bg-white hover:bg-[#ea580c] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all text-left shadow-[3px_3px_0px_0px_#09090b] group"
             >
-              <div className="text-2xl mb-1">🚶</div>
-              <div className="font-bold text-sm text-slate-200 group-hover:text-indigo-400 transition-colors">
-                Walk 5000 steps
-              </div>
-              <div className="text-[11px] text-slate-500">Fitness • 5000 steps/day</div>
+              <div className="text-xs font-bold text-zinc-500 uppercase group-hover:text-black">02 / TEMPLATE</div>
+              <div className="font-black text-sm text-black mt-1 uppercase">WALK 5000 STEPS</div>
+              <div className="text-[11px] text-zinc-600 mt-1 font-bold group-hover:text-black">FITNESS • 5000 STEPS/DAY</div>
             </button>
 
             <button
-              onClick={() => handleQuickAdd('Study', 60, 'minutes', 'Focus')}
-              className="p-4 rounded-2xl bg-slate-950 border border-slate-800 hover:border-indigo-500/50 hover:bg-slate-900 transition-all text-left space-y-1 group"
+              onClick={() => handleQuickAdd('STUDY', 60, 'MINUTES', 'FOCUS')}
+              className="p-4 border-2 border-black bg-white hover:bg-[#ea580c] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all text-left shadow-[3px_3px_0px_0px_#09090b] group"
             >
-              <div className="text-2xl mb-1">📚</div>
-              <div className="font-bold text-sm text-slate-200 group-hover:text-indigo-400 transition-colors">
-                Study 60 minutes
-              </div>
-              <div className="text-[11px] text-slate-500">Focus • 60 mins/day</div>
+              <div className="text-xs font-bold text-zinc-500 uppercase group-hover:text-black">03 / TEMPLATE</div>
+              <div className="font-black text-sm text-black mt-1 uppercase">STUDY 60 MINS</div>
+              <div className="text-[11px] text-zinc-600 mt-1 font-bold group-hover:text-black">FOCUS • 60 MINS/DAY</div>
             </button>
 
             <button
-              onClick={() => handleQuickAdd('Drink Water', 2, 'litres', 'Health')}
-              className="p-4 rounded-2xl bg-slate-950 border border-slate-800 hover:border-indigo-500/50 hover:bg-slate-900 transition-all text-left space-y-1 group"
+              onClick={() => handleQuickAdd('WATER', 2, 'LITRES', 'HEALTH')}
+              className="p-4 border-2 border-black bg-white hover:bg-[#ea580c] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all text-left shadow-[3px_3px_0px_0px_#09090b] group"
             >
-              <div className="text-2xl mb-1">💧</div>
-              <div className="font-bold text-sm text-slate-200 group-hover:text-indigo-400 transition-colors">
-                Drink 2 litres
-              </div>
-              <div className="text-[11px] text-slate-500">Health • 2 litres/day</div>
+              <div className="text-xs font-bold text-zinc-500 uppercase group-hover:text-black">04 / TEMPLATE</div>
+              <div className="font-black text-sm text-black mt-1 uppercase">DRINK 2 LITRES</div>
+              <div className="text-[11px] text-zinc-600 mt-1 font-bold group-hover:text-black">HEALTH • 2 LITRES/DAY</div>
             </button>
           </div>
 
           <div>
             <button
               onClick={() => setIsCreateOpen(true)}
-              className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs shadow-lg shadow-indigo-600/20"
+              className="btn-brutal-primary px-6 py-3 text-xs"
             >
-              Create Custom Habit
+              INITIALIZE CUSTOM PROTOCOL
             </button>
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {habits.map((habit) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {habits.map((habit, index) => (
             <HabitCard
               key={habit.id}
+              index={index}
               habit={habit}
               recoveryTokensAvailable={recoveryTokensAvailable}
               onLog={handleLogProgress}
@@ -391,6 +430,83 @@ export default function DashboardPage() {
             />
           ))}
         </div>
+      )}
+
+      {/* Aggregate 7-Day System Status Table (Section 25) */}
+      {habits.length > 0 && (
+        <section className="border-[3px] border-black bg-white p-5 shadow-[4px_4px_0px_0px_#09090b] space-y-3 font-mono">
+          <div className="flex justify-between items-center text-xs font-bold uppercase border-b-2 border-black pb-2">
+            <span className="flex items-center gap-2">
+              <span className="w-2 h-2 bg-black" />
+              SYSTEM TELEMETRY MATRIX // LAST 7 CALENDAR DAYS
+            </span>
+            <span className="text-[11px] text-zinc-500">
+              ■ COMPLETED • ↺ RECOVERED • × MISSED • · PENDING
+            </span>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs text-left border-collapse">
+              <thead>
+                <tr className="border-b-2 border-black bg-zinc-100 text-black uppercase">
+                  <th className="p-2.5 font-bold">HABIT PROTOCOL</th>
+                  <th className="p-2.5 font-bold">DAILY TARGET</th>
+                  <th className="p-2.5 font-bold">STREAK</th>
+                  {habits[0]?.sevenDays.map((d, i) => (
+                    <th key={i} className="p-2.5 font-bold text-center">
+                      {d.dayLabel.toUpperCase()}
+                    </th>
+                  ))}
+                  <th className="p-2.5 font-bold text-right">HIT RATE</th>
+                </tr>
+              </thead>
+              <tbody>
+                {habits.map((habit, idx) => (
+                  <tr
+                    key={habit.id}
+                    className="border-b border-black hover:bg-zinc-50 transition-colors"
+                  >
+                    <td className="p-2.5 font-black uppercase text-black">
+                      {String(idx + 1).padStart(2, '0')} / {habit.name}
+                    </td>
+                    <td className="p-2.5 text-zinc-700">
+                      {habit.target_value} {habit.target_unit.toUpperCase()}
+                    </td>
+                    <td className="p-2.5 font-black text-[#ea580c]">
+                      {String(habit.currentStreak).padStart(2, '0')}D
+                    </td>
+                    {habit.sevenDays.map((d, i) => (
+                      <td key={i} className="p-2.5 text-center">
+                        <span
+                          className={`inline-block w-6 h-6 leading-6 text-center font-bold border ${
+                            d.status === 'completed'
+                              ? 'bg-black text-white border-black'
+                              : d.status === 'skipped'
+                              ? 'bg-[#ea580c] text-black font-black border-black'
+                              : d.status === 'missed'
+                              ? 'bg-white text-[#dc2626] border-black'
+                              : 'bg-zinc-100 text-zinc-400 border-zinc-300'
+                          }`}
+                        >
+                          {d.status === 'completed'
+                            ? '■'
+                            : d.status === 'skipped'
+                            ? '↺'
+                            : d.status === 'missed'
+                            ? '×'
+                            : '·'}
+                        </span>
+                      </td>
+                    ))}
+                    <td className="p-2.5 text-right font-black">
+                      {habit.completionRate}%
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
       )}
 
       {/* Modals */}

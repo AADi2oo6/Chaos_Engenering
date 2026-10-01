@@ -1,21 +1,21 @@
 'use client';
 
 import React, { useState } from 'react';
+import confetti from 'canvas-confetti';
 import {
   Flame,
   Trophy,
-  CheckCircle2,
   Clock,
-  MoreVertical,
   Pencil,
   Trash2,
-  ShieldAlert,
+  AlertTriangle,
   Loader2,
-  Sparkles,
+  Check,
 } from 'lucide-react';
 import { Habit, HabitLog, DayStatus } from '@/types/habit';
 
 interface HabitCardProps {
+  index: number;
   habit: Habit & {
     todayLog?: HabitLog | null;
     currentStreak: number;
@@ -31,6 +31,7 @@ interface HabitCardProps {
 }
 
 export function HabitCard({
+  index,
   habit,
   recoveryTokensAvailable,
   onLog,
@@ -43,7 +44,6 @@ export function HabitCard({
   );
   const [logging, setLogging] = useState(false);
   const [recovering, setRecovering] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
 
   const targetValue = Number(habit.target_value);
   const currentActual = habit.todayLog ? Number(habit.todayLog.actual_value) : 0;
@@ -52,11 +52,26 @@ export function HabitCard({
   const progressPercent = Math.min(100, Math.round((currentActual / targetValue) * 100));
 
   // Check if yesterday is eligible for recovery (i.e. was missed and not yet recovered)
-  const yesterdayStatus = habit.sevenDays.length >= 2 ? habit.sevenDays[habit.sevenDays.length - 2] : null;
+  const yesterdayStatus =
+    habit.sevenDays.length >= 2 ? habit.sevenDays[habit.sevenDays.length - 2] : null;
   const canProtectStreak =
     yesterdayStatus &&
     yesterdayStatus.status === 'missed' &&
     recoveryTokensAvailable > 0;
+
+  const triggerCelebration = () => {
+    try {
+      confetti({
+        particleCount: 45,
+        spread: 60,
+        origin: { y: 0.8 },
+        colors: ['#ea580c', '#09090b', '#ffffff'],
+        disableForReducedMotion: true,
+      });
+    } catch {
+      // ignore
+    }
+  };
 
   const handleLogSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,6 +81,9 @@ export function HabitCard({
     setLogging(true);
     try {
       await onLog(habit.id, val);
+      if (val >= targetValue) {
+        triggerCelebration();
+      }
     } finally {
       setLogging(false);
     }
@@ -81,145 +99,142 @@ export function HabitCard({
     }
   };
 
+  const formattedIndex = String(index + 1).padStart(2, '0');
+  const formattedStreak = String(habit.currentStreak).padStart(2, '0');
+  const formattedBest = String(habit.bestStreak).padStart(2, '0');
+
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg hover:border-slate-700/80 transition-all space-y-4 relative flex flex-col justify-between">
-      {/* Top Header */}
-      <div>
-        <div className="flex justify-between items-start gap-3">
-          <div className="space-y-1">
+    <div className="border-[3px] border-black bg-white p-5 shadow-[4px_4px_0px_0px_#09090b] flex flex-col justify-between space-y-4 hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[5px_5px_0px_0px_#09090b] transition-all">
+      {/* Top Header Row */}
+      <div className="space-y-3">
+        <div className="flex justify-between items-start gap-2 border-b-2 border-black pb-2.5 font-mono">
+          <div>
             <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-slate-800 text-slate-400 border border-slate-700/50">
+              <span className="text-xs font-black text-black">
+                {formattedIndex} / {habit.name.toUpperCase()}
+              </span>
+              <span className="text-[10px] font-bold px-1.5 py-0.5 bg-zinc-100 border border-black uppercase text-zinc-700">
                 {habit.category}
               </span>
-              {habit.reminder_time && (
-                <span className="flex items-center gap-1 text-[11px] text-slate-500">
-                  <Clock className="h-3 w-3" /> {habit.reminder_time}
-                </span>
-              )}
             </div>
-            <h3 className="font-bold text-lg text-white tracking-tight">{habit.name}</h3>
             {habit.description && (
-              <p className="text-xs text-slate-400 line-clamp-1">{habit.description}</p>
+              <p className="text-[11px] text-zinc-500 font-sans mt-0.5 line-clamp-1">
+                {habit.description}
+              </p>
             )}
           </div>
 
-          <div className="relative">
+          <div className="flex items-center gap-1">
             <button
-              onClick={() => setMenuOpen(!menuOpen)}
-              className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
-              title="Habit options"
+              onClick={() => onEdit(habit)}
+              className="p-1.5 border border-black bg-white hover:bg-black hover:text-white transition-colors"
+              title="Edit Habit Configuration"
             >
-              <MoreVertical className="h-4 w-4" />
+              <Pencil className="h-3 w-3" />
             </button>
-            {menuOpen && (
-              <div
-                className="absolute right-0 mt-1 w-32 rounded-xl bg-slate-950 border border-slate-800 shadow-xl z-20 py-1"
-                onMouseLeave={() => setMenuOpen(false)}
-              >
-                <button
-                  onClick={() => {
-                    setMenuOpen(false);
-                    onEdit(habit);
-                  }}
-                  className="w-full px-3 py-2 text-left text-xs text-slate-300 hover:bg-slate-800 flex items-center gap-2 transition-colors"
-                >
-                  <Pencil className="h-3.5 w-3.5" /> Edit Habit
-                </button>
-                <button
-                  onClick={() => {
-                    setMenuOpen(false);
-                    onDelete(habit);
-                  }}
-                  className="w-full px-3 py-2 text-left text-xs text-rose-400 hover:bg-rose-500/10 flex items-center gap-2 transition-colors"
-                >
-                  <Trash2 className="h-3.5 w-3.5" /> Delete
-                </button>
-              </div>
-            )}
+            <button
+              onClick={() => onDelete(habit)}
+              className="p-1.5 border border-black bg-white text-[#dc2626] hover:bg-[#dc2626] hover:text-white transition-colors"
+              title="Delete Habit"
+            >
+              <Trash2 className="h-3 w-3" />
+            </button>
           </div>
         </div>
 
-        {/* Target and Today Stat */}
-        <div className="mt-3 flex items-center justify-between text-xs text-slate-400">
-          <div>
-            Target: <span className="font-semibold text-slate-200">{targetValue} {habit.target_unit}/day</span>
+        {/* Target and Today Telemetry */}
+        <div className="grid grid-cols-2 gap-2 text-xs font-mono">
+          <div className="border-2 border-black p-2 bg-zinc-50">
+            <div className="text-[10px] text-zinc-500 font-bold uppercase">DAILY TARGET</div>
+            <div className="text-sm font-black text-black mt-0.5">
+              {targetValue} {habit.target_unit.toUpperCase()}
+            </div>
           </div>
-          <div className="flex items-center gap-1.5 font-medium">
+          <div className="border-2 border-black p-2 bg-zinc-50">
+            <div className="text-[10px] text-zinc-500 font-bold uppercase">TODAY RECORDED</div>
+            <div className="text-sm font-black text-[#ea580c] mt-0.5">
+              {currentActual} {habit.target_unit.toUpperCase()}
+            </div>
+          </div>
+        </div>
+
+        {/* Rectangular Progress Bar */}
+        <div className="space-y-1">
+          <div className="flex justify-between items-center text-[11px] font-mono font-bold">
+            <span className="text-zinc-600 uppercase">COMPLETION</span>
+            <span className="text-black font-black">{progressPercent}%</span>
+          </div>
+          <div className="h-3.5 w-full bg-zinc-200 border-2 border-black p-0.5">
+            <div
+              className={`h-full transition-all duration-300 ${
+                isCompleted ? 'bg-black' : 'bg-[#ea580c]'
+              }`}
+              style={{ width: `${progressPercent}%` }}
+            />
+          </div>
+        </div>
+
+        {/* Status and Streak Row */}
+        <div className="grid grid-cols-2 gap-2 font-mono text-xs pt-1">
+          <div>
+            <div className="text-[10px] text-zinc-500 font-bold uppercase mb-1">STATUS</div>
             {isCompleted ? (
-              <span className="text-emerald-400 flex items-center gap-1 font-semibold">
-                <CheckCircle2 className="h-3.5 w-3.5" /> Done ({currentActual} {habit.target_unit})
+              <span className="inline-block bg-black text-white font-black px-2 py-0.5 text-[11px] uppercase border border-black">
+                ■ COMPLETED
               </span>
             ) : isPartial ? (
-              <span className="text-amber-400 font-semibold">
-                Partial ({currentActual}/{targetValue} {habit.target_unit})
+              <span className="inline-block bg-white text-black font-black px-2 py-0.5 text-[11px] uppercase border-2 border-black">
+                ◧ PARTIAL
               </span>
             ) : (
-              <span className="text-slate-500">Pending today</span>
+              <span className="inline-block bg-zinc-100 text-zinc-600 font-bold px-2 py-0.5 text-[11px] uppercase border border-black">
+                □ PENDING
+              </span>
             )}
           </div>
-        </div>
 
-        {/* Progress Bar */}
-        <div className="mt-2 h-2 w-full bg-slate-800 rounded-full overflow-hidden">
-          <div
-            className={`h-full transition-all duration-500 ${
-              isCompleted
-                ? 'bg-emerald-500'
-                : isPartial
-                ? 'bg-amber-500'
-                : 'bg-slate-700'
-            }`}
-            style={{ width: `${progressPercent}%` }}
-          />
+          <div>
+            <div className="text-[10px] text-zinc-500 font-bold uppercase mb-1">STREAK</div>
+            <div className="text-sm font-black text-[#ea580c]">
+              {formattedStreak} <span className="text-[10px] text-black uppercase font-bold">DAYS</span>
+              <span className="text-[10px] text-zinc-500 font-normal ml-1">
+                (BEST: {formattedBest})
+              </span>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Streak and Badges */}
-      <div className="flex items-center justify-between gap-2 py-1 border-t border-b border-slate-800/60 text-xs">
-        <div className="flex items-center gap-1.5 font-bold text-amber-400">
-          <Flame className="h-4 w-4 fill-amber-500/20" />
-          <span>{habit.currentStreak} day streak</span>
+      {/* 7-Day Technical Matrix */}
+      <div className="space-y-2 pt-2 border-t-2 border-black font-mono">
+        <div className="flex justify-between items-center text-[10px] font-bold text-zinc-600 uppercase">
+          <span>7-DAY TELEMETRY</span>
+          <span>{habit.completionRate}% HIT RATE</span>
         </div>
-        <div className="flex items-center gap-1 text-slate-400 text-[11px]">
-          <Trophy className="h-3.5 w-3.5 text-yellow-500/80" />
-          <span>Best: {habit.bestStreak}d</span>
-        </div>
-      </div>
-
-      {/* 7-Day History Boxes */}
-      <div className="space-y-1.5">
-        <div className="flex justify-between items-center text-[11px] text-slate-500 font-medium">
-          <span>Last 7 Days</span>
-          <span className="text-[10px]">
-            {habit.completionRate}% completion
-          </span>
-        </div>
-        <div className="grid grid-cols-7 gap-1">
+        <div className="grid grid-cols-7 gap-1 text-center">
           {habit.sevenDays.map((day, idx) => {
             const isSuccess = day.status === 'completed';
             const isSkip = day.status === 'skipped';
             const isMiss = day.status === 'missed';
-            const isPend = day.status === 'pending';
 
             return (
-              <div
-                key={idx}
-                className="flex flex-col items-center gap-1"
-                title={`${day.date}: ${day.status}${day.actual_value !== undefined ? ` (${day.actual_value})` : ''}`}
-              >
-                <span className="text-[10px] text-slate-500">{day.dayLabel}</span>
+              <div key={idx} className="flex flex-col gap-1">
+                <span className="text-[9px] font-bold text-zinc-500">{day.dayLabel[0]}</span>
                 <div
-                  className={`w-full aspect-square max-w-[36px] rounded-lg flex items-center justify-center font-bold text-xs transition-colors border ${
+                  className={`h-7 flex items-center justify-center font-bold text-xs border-2 border-black transition-colors ${
                     isSuccess
-                      ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
+                      ? 'bg-black text-white'
                       : isSkip
-                      ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40'
+                      ? 'bg-[#ea580c] text-black font-black'
                       : isMiss
-                      ? 'bg-rose-500/10 text-rose-400 border-rose-500/20'
-                      : 'bg-slate-800/80 text-slate-400 border-slate-700/60'
+                      ? 'bg-white text-[#dc2626]'
+                      : 'bg-white text-zinc-400'
+                  }`}
+                  title={`${day.date}: ${day.status.toUpperCase()}${
+                    day.actual_value !== undefined ? ` (${day.actual_value})` : ''
                   }`}
                 >
-                  {isSuccess ? '✓' : isSkip ? '🛟' : isMiss ? '×' : '•'}
+                  {isSuccess ? '■' : isSkip ? '↺' : isMiss ? '×' : '·'}
                 </div>
               </div>
             );
@@ -227,53 +242,53 @@ export function HabitCard({
         </div>
       </div>
 
-      {/* Recovery Promotion banner if yesterday was missed */}
+      {/* Recovery Offer Banner if yesterday missed */}
       {canProtectStreak && (
-        <div className="p-3 rounded-xl bg-cyan-950/40 border border-cyan-500/30 space-y-2">
-          <div className="flex items-start gap-2 text-xs text-cyan-300">
-            <ShieldAlert className="h-4 w-4 shrink-0 text-cyan-400 mt-0.5" />
+        <div className="p-3 border-2 border-black bg-[#ea580c]/10 space-y-2 font-mono">
+          <div className="flex items-start gap-2 text-xs">
+            <AlertTriangle className="h-4 w-4 shrink-0 text-[#ea580c] mt-0.5" />
             <div>
-              <p className="font-semibold">Yesterday missed ({yesterdayStatus.date})</p>
-              <p className="text-[11px] text-slate-400">
-                Your streak can be protected with your 1 weekly recovery token.
-              </p>
+              <div className="font-black uppercase text-black">
+                YESTERDAY MISSED ({yesterdayStatus.date})
+              </div>
+              <div className="text-[11px] text-zinc-700">
+                STREAK CAN BE PROTECTED WITH 1 WEEKLY TOKEN.
+              </div>
             </div>
           </div>
-          <div className="flex gap-2 justify-end">
+          <div className="flex justify-end">
             <button
               onClick={handleUseRecovery}
               disabled={recovering}
-              className="px-3 py-1 rounded-lg bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 text-white font-medium text-xs flex items-center gap-1.5 transition-colors shadow-sm"
+              className="px-3 py-1 bg-[#ea580c] hover:bg-black hover:text-white text-black font-bold text-xs border-2 border-black uppercase tracking-wider transition-colors shadow-[2px_2px_0px_0px_#09090b]"
             >
               {recovering ? (
-                <Loader2 className="h-3 w-3 animate-spin" />
+                <Loader2 className="h-3 w-3 animate-spin inline mr-1" />
               ) : (
-                '🛟 Use Recovery'
+                '↺ PROTECT STREAK'
               )}
             </button>
           </div>
         </div>
       )}
 
-      {/* Log Today Input Form */}
-      <form onSubmit={handleLogSubmit} className="pt-2 flex items-center gap-2">
-        <div className="relative flex-1">
-          <input
-            type="number"
-            step="any"
-            min="0"
-            value={actualInput}
-            onChange={(e) => setActualInput(e.target.value)}
-            placeholder={`Log ${habit.target_unit}...`}
-            className="w-full px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 text-xs focus:outline-none focus:border-indigo-500 transition-colors"
-          />
-        </div>
+      {/* Daily Value Input & Log Action Form */}
+      <form onSubmit={handleLogSubmit} className="pt-2 flex items-center gap-2 font-mono">
+        <input
+          type="number"
+          step="any"
+          min="0"
+          value={actualInput}
+          onChange={(e) => setActualInput(e.target.value)}
+          placeholder={`ENTER ${habit.target_unit.toUpperCase()}...`}
+          className="flex-1 px-3 py-1.5 border-2 border-black bg-white text-xs text-black placeholder:text-zinc-400 focus:outline-none focus:border-[#ea580c]"
+        />
         <button
           type="submit"
           disabled={logging || actualInput === ''}
-          className="px-4 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white font-medium text-xs flex items-center gap-1 transition-all shadow-sm shadow-indigo-600/20"
+          className="btn-brutal-primary py-1.5 px-4 text-xs font-bold"
         >
-          {logging ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Log'}
+          {logging ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : 'LOG'}
         </button>
       </form>
     </div>

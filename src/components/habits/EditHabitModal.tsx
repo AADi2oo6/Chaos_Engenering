@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, Loader2, Pencil, Info } from 'lucide-react';
+import { X, Loader2, Info } from 'lucide-react';
 import { Habit } from '@/types/habit';
 import { HabitUpdateInput } from '@/lib/validation/habit-schema';
 
@@ -15,9 +15,9 @@ interface EditHabitModalProps {
 export function EditHabitModal({ habit, isOpen, onClose, onUpdate }: EditHabitModalProps) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [category, setCategory] = useState('Learning');
+  const [category, setCategory] = useState('LEARNING');
   const [targetValue, setTargetValue] = useState<string>('10');
-  const [targetUnit, setTargetUnit] = useState('pages');
+  const [targetUnit, setTargetUnit] = useState('PAGES');
   const [reminderTime, setReminderTime] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -40,87 +40,92 @@ export function EditHabitModal({ habit, isOpen, onClose, onUpdate }: EditHabitMo
     setError(null);
     const val = parseFloat(targetValue);
     if (isNaN(val) || val <= 0) {
-      setError('Target value must be greater than 0');
+      setError('TARGET VALUE MUST BE POSITIVE');
       return;
     }
 
     setLoading(true);
     try {
       await onUpdate(habit.id, {
-        name,
-        description: description || null,
-        category,
+        name: name.trim(),
+        description: description.trim() || null,
+        category: category.trim(),
         target_value: val,
-        target_unit: targetUnit,
+        target_unit: targetUnit.trim(),
         reminder_time: reminderTime || null,
       });
       onClose();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to update habit');
+      setError(err instanceof Error ? err.message : 'FAILED TO UPDATE CONFIGURATION');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-      <div className="w-full max-w-lg bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-6 space-y-5">
-        <div className="flex justify-between items-center border-b border-slate-800 pb-3">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-none">
+      <div className="w-full max-w-lg bg-white border-[3px] border-black p-6 shadow-[8px_8px_0px_0px_#09090b] space-y-5 font-mono text-xs">
+        {/* Header */}
+        <div className="flex justify-between items-center border-b-2 border-black pb-3">
           <div className="flex items-center gap-2">
-            <div className="p-2 rounded-xl bg-indigo-600/20 text-indigo-400">
-              <Pencil className="h-4 w-4" />
-            </div>
-            <div>
-              <h2 className="text-lg font-bold text-white tracking-tight">Edit Habit</h2>
-              <p className="text-xs text-slate-400">Update target, schedule, or details</p>
-            </div>
+            <span className="w-3 h-3 bg-black" />
+            <h2 className="text-base font-black uppercase tracking-tight text-black">
+              RECONFIGURE HABIT // {habit.name.toUpperCase()}
+            </h2>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+            className="p-1 border border-black hover:bg-black hover:text-white transition-colors"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
 
-        <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 flex items-start gap-2.5 text-xs text-slate-400">
-          <Info className="h-4 w-4 shrink-0 text-indigo-400 mt-0.5" />
-          <p>
-            Modifying your target will apply to future logs. All historical logs and streaks remain completely intact.
+        {/* System Notice */}
+        <div className="p-3 border-2 border-black bg-zinc-100 flex items-start gap-2 text-zinc-700">
+          <Info className="h-4 w-4 shrink-0 mt-0.5 text-black" />
+          <p className="font-bold">
+            TARGET REVISION APPLIES PROSPECTIVELY. ALL HISTORICAL LOGS, STREAKS, AND TELEMETRY REMAIN INTACT.
           </p>
         </div>
 
         {error && (
-          <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs">
+          <div className="p-3 border-2 border-black bg-red-50 text-[#dc2626] font-bold uppercase">
             {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">Habit Name *</label>
+            <label className="block font-bold uppercase text-black mb-1">
+              HABIT NAME *
+            </label>
             <input
               type="text"
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-indigo-500"
+              className="w-full px-3 py-2 border-2 border-black bg-white text-black font-mono text-xs focus:outline-none focus:border-[#ea580c]"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">Description</label>
+            <label className="block font-bold uppercase text-black mb-1">
+              DESCRIPTION
+            </label>
             <input
               type="text"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-indigo-500"
+              className="w-full px-3 py-2 border-2 border-black bg-white text-black font-mono text-xs focus:outline-none focus:border-[#ea580c]"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">Daily Target *</label>
+              <label className="block font-bold uppercase text-black mb-1">
+                DAILY TARGET *
+              </label>
               <input
                 type="number"
                 step="any"
@@ -128,62 +133,71 @@ export function EditHabitModal({ habit, isOpen, onClose, onUpdate }: EditHabitMo
                 required
                 value={targetValue}
                 onChange={(e) => setTargetValue(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-indigo-500"
+                className="w-full px-3 py-2 border-2 border-black bg-white text-black font-mono text-xs focus:outline-none focus:border-[#ea580c]"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">Unit *</label>
+              <label className="block font-bold uppercase text-black mb-1">
+                UNIT *
+              </label>
               <input
                 type="text"
                 required
                 value={targetUnit}
                 onChange={(e) => setTargetUnit(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-indigo-500"
+                className="w-full px-3 py-2 border-2 border-black bg-white text-black font-mono text-xs focus:outline-none focus:border-[#ea580c]"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">Category</label>
+              <label className="block font-bold uppercase text-black mb-1">
+                CATEGORY
+              </label>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white text-sm focus:outline-none focus:border-indigo-500"
+                className="w-full px-3 py-2 border-2 border-black bg-white text-black font-mono text-xs focus:outline-none focus:border-[#ea580c]"
               >
-                <option value="Learning">Learning</option>
-                <option value="Fitness">Fitness</option>
-                <option value="Health">Health</option>
-                <option value="Focus">Focus</option>
-                <option value="Mindset">Mindset</option>
-                <option value="General">General</option>
+                <option value="LEARNING">LEARNING</option>
+                <option value="FITNESS">FITNESS</option>
+                <option value="HEALTH">HEALTH</option>
+                <option value="FOCUS">FOCUS</option>
+                <option value="MINDSET">MINDSET</option>
+                <option value="GENERAL">GENERAL</option>
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">Reminder Time</label>
+              <label className="block font-bold uppercase text-black mb-1">
+                REMINDER TIME
+              </label>
               <input
                 type="time"
                 value={reminderTime}
                 onChange={(e) => setReminderTime(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white text-sm focus:outline-none focus:border-indigo-500"
+                className="w-full px-3 py-2 border-2 border-black bg-white text-black font-mono text-xs focus:outline-none focus:border-[#ea580c]"
               />
             </div>
           </div>
 
-          <div className="flex justify-end gap-3 pt-3 border-t border-slate-800">
+          <div className="flex justify-end gap-3 pt-3 border-t-2 border-black">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium transition-colors"
+              className="btn-brutal-secondary"
             >
-              Cancel
+              CANCEL
             </button>
             <button
               type="submit"
               disabled={loading || !name.trim()}
-              className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-xs font-medium flex items-center gap-2 shadow-md shadow-indigo-600/20 transition-all"
+              className="btn-brutal-primary"
             >
-              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save Changes'}
+              {loading ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin mr-1 inline" />
+              ) : null}
+              COMMIT REVISION
             </button>
           </div>
         </form>
