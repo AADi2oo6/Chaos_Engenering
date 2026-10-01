@@ -8,4 +8,7 @@ __pycache__/
 env/
 dist/
 build/
+.next/
+out/
+*.tsbuildinfo
 *.log
